@@ -1,7 +1,7 @@
 // ===== RENDER HTTP SERVER (ZORUNLU) =====
 const http = require("http");
-const PORT = process.env.PORT || 3000;
 
+const PORT = process.env.PORT || 3000;
 http.createServer((req, res) => {
   res.writeHead(200, { "Content-Type": "text/plain" });
   res.end("MysticAI running");
@@ -16,39 +16,28 @@ const HOST = "yapsavun.com";
 const USERNAME = "MysticAI";
 const PASSWORD = "123456789_tr";
 
-let loggingIn = false;
+let bot;
 
 function startBot() {
   console.log("Bot başlatılıyor...");
 
-  const bot = mineflayer.createBot({
+  bot = mineflayer.createBot({
     host: HOST,
     username: USERNAME,
     version: false
   });
 
-  bot.on("login", () => {
-    console.log("Sunucuya bağlanıldı");
+  bot.once("spawn", () => {
+    console.log("Spawn oldu, login gönderiliyor...");
+
+    setTimeout(() => {
+      bot.chat(`/login ${PASSWORD}`);
+      console.log("/login gönderildi");
+    }, 800); // ÇOK KRİTİK
   });
 
   bot.on("message", (msg) => {
-    const text = msg.toString();
-    console.log("[CHAT]", text);
-
-    // SUNUCU LOGIN ISTEDIGINDE
-    if (
-      text.includes("/login") &&
-      !loggingIn
-    ) {
-      loggingIn = true;
-
-      console.log("Login algılandı, 2 sn sonra gönderiliyor...");
-
-      setTimeout(() => {
-        bot.chat(`/login ${PASSWORD}`);
-        console.log("/login gönderildi");
-      }, 2000);
-    }
+    console.log("[CHAT]", msg.toString());
   });
 
   bot.on("kicked", (reason) => {
@@ -56,14 +45,21 @@ function startBot() {
   });
 
   bot.on("end", () => {
-    console.log("Bağlantı koptu, 5 sn sonra yeniden bağlanılıyor...");
-    loggingIn = false;
-    setTimeout(startBot, 5000);
+    console.log("Bağlantı koptu, 6 sn sonra yeniden bağlanılıyor...");
+    setTimeout(startBot, 6000);
   });
 
   bot.on("error", (err) => {
     console.log("HATA:", err);
   });
 }
+
+// Node asla kapanmasın
+process.on("uncaughtException", err => {
+  console.log("UNCAUGHT:", err);
+});
+process.on("unhandledRejection", err => {
+  console.log("REJECTION:", err);
+});
 
 startBot();
