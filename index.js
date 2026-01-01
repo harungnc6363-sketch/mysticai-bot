@@ -1,20 +1,22 @@
-// ==== HTTP SERVER (Render için zorunlu) ====
+// ===== RENDER HTTP SERVER (ZORUNLU) =====
 const http = require("http");
 const PORT = process.env.PORT || 3000;
 
 http.createServer((req, res) => {
   res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("MysticAI bot is running");
+  res.end("MysticAI running");
 }).listen(PORT, () => {
-  console.log("HTTP server running on port", PORT);
+  console.log("HTTP server listening on", PORT);
 });
 
-// ==== MINEFLAYER BOT ====
+// ===== MINEFLAYER =====
 const mineflayer = require("mineflayer");
 
 const HOST = "yapsavun.com";
 const USERNAME = "MysticAI";
 const PASSWORD = "123456789_tr";
+
+let loggingIn = false;
 
 function startBot() {
   console.log("Bot başlatılıyor...");
@@ -29,16 +31,24 @@ function startBot() {
     console.log("Sunucuya bağlanıldı");
   });
 
-  bot.on("spawn", () => {
-    console.log("Spawn oldu, /login bekleniyor...");
-
-    setTimeout(() => {
-      slowType(bot, `/login ${PASSWORD}`, 150);
-    }, 2500);
-  });
-
   bot.on("message", (msg) => {
-    console.log("[CHAT]", msg.toString());
+    const text = msg.toString();
+    console.log("[CHAT]", text);
+
+    // SUNUCU LOGIN ISTEDIGINDE
+    if (
+      text.includes("/login") &&
+      !loggingIn
+    ) {
+      loggingIn = true;
+
+      console.log("Login algılandı, 2 sn sonra gönderiliyor...");
+
+      setTimeout(() => {
+        bot.chat(`/login ${PASSWORD}`);
+        console.log("/login gönderildi");
+      }, 2000);
+    }
   });
 
   bot.on("kicked", (reason) => {
@@ -47,25 +57,13 @@ function startBot() {
 
   bot.on("end", () => {
     console.log("Bağlantı koptu, 5 sn sonra yeniden bağlanılıyor...");
+    loggingIn = false;
     setTimeout(startBot, 5000);
   });
 
   bot.on("error", (err) => {
     console.log("HATA:", err);
   });
-}
-
-// Harf harf yazma (insan gibi)
-function slowType(bot, text, delay) {
-  let i = 0;
-  const interval = setInterval(() => {
-    if (i >= text.length) {
-      clearInterval(interval);
-      return;
-    }
-    bot.chat(text[i]);
-    i++;
-  }, delay);
 }
 
 startBot();
